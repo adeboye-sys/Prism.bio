@@ -118,7 +118,7 @@ export default function LandingPage() {
                 name: "Aïssatou D.",
                 role: "Artiste Digitale",
                 text: "Prism a complètement transformé la façon dont mes clients perçoivent mon portfolio. L'arrière-plan 3D attire tout de suite l'attention.",
-                img: "https://images.unsplash.com/photo-1531123897727-8f129e1bf98a?w=150&h=150&fit=crop"
+                img: "/aissatou.png"
               },
               {
                 name: "Kwame O.",
