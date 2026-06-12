@@ -47,7 +47,7 @@ export default function LandingPage() {
               Créer mon profil <ArrowRight size={20} />
             </Link>
             <Link 
-              href="#examples" 
+              href="#reviews" 
               className="px-8 py-4 rounded-full font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
             >
               Voir des exemples
@@ -154,9 +154,9 @@ export default function LandingPage() {
         <h2 className="text-2xl font-serif font-bold tracking-widest mb-4">PRISM<span className="text-[#D4AF37]">.BIO</span></h2>
         <p className="text-white/40 text-sm mb-8">© 2026 Prism.bio. Tous droits réservés.</p>
         <div className="flex justify-center gap-6 text-sm text-white/50">
-          <Link href="#" className="hover:text-white transition-colors">Politique de confidentialité</Link>
-          <Link href="#" className="hover:text-white transition-colors">Conditions d'utilisation</Link>
-          <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+          <Link href="/privacy" className="hover:text-white transition-colors">Politique de confidentialité</Link>
+          <Link href="/terms" className="hover:text-white transition-colors">Conditions d'utilisation</Link>
+          <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
         </div>
       </footer>
     </div>

@@ -1,10 +1,87 @@
-import { Plus, Trash2, Download, Copy, Share2, Upload, Crown, LogOut } from "lucide-react";
+import { Plus, Trash2, Download, Copy, Share2, Upload, Crown, LogOut, Check, ExternalLink, X, QrCode } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { generateStandaloneHTML } from "@/utils/htmlGenerator";
+import QRCode from "qrcode";
 
 export default function Builder({ config, setConfig }) {
   const router = useRouter();
   const [userContext, setUserContext] = useState({ loggedIn: false, isPremium: false });
+  const [isCopied, setIsCopied] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalCopied, setModalCopied] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [showQrSection, setShowQrSection] = useState(false);
+
+  const getProfileUrl = () => {
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/profile`;
+    }
+    return "/profile";
+  };
+
+  const handleCopyPreview = () => {
+    const url = getProfileUrl();
+    navigator.clipboard.writeText(url).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
+
+  const handleCopyModal = () => {
+    const url = getProfileUrl();
+    navigator.clipboard.writeText(url).then(() => {
+      setModalCopied(true);
+      setTimeout(() => setModalCopied(false), 2000);
+    });
+  };
+
+  const handleDownloadHTML = () => {
+    const htmlString = generateStandaloneHTML(config);
+    const blob = new Blob([htmlString], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${config.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-prism.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleGenerateQR = async () => {
+    try {
+      const url = getProfileUrl();
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 250,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+      setQrCodeUrl(dataUrl);
+      setShowQrSection(true);
+    } catch (err) {
+      console.error("Error generating QR code", err);
+    }
+  };
+
+  const handleDownloadQR = () => {
+    if (!qrCodeUrl) return;
+    const link = document.createElement("a");
+    link.href = qrCodeUrl;
+    link.download = `${config.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-qrcode.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setShowQrSection(false);
+    setQrCodeUrl("");
+  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem("prismUser");
@@ -223,13 +300,121 @@ export default function Builder({ config, setConfig }) {
       </div>
 
       <div className="p-8 pt-4">
-        <button className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] text-black rounded-2xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+        <button 
+          onClick={() => setShowModal(true)}
+          className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] text-black rounded-2xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(212,175,55,0.2)]"
+        >
           <Download size={18} /> Générer ma page
         </button>
-        <button className="w-full py-4 mt-3 bg-transparent text-white border border-white/10 rounded-2xl font-medium text-sm hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-          <Copy size={16} /> Copier le lien d'aperçu
+        <button 
+          onClick={handleCopyPreview}
+          className={`w-full py-4 mt-3 rounded-2xl font-medium text-sm transition-all flex items-center justify-center gap-2 border ${
+            isCopied 
+              ? 'bg-green-500/10 text-green-400 border-green-500/30' 
+              : 'bg-transparent text-white border-white/10 hover:bg-white/5'
+          }`}
+        >
+          {isCopied ? <Check size={16} /> : <Copy size={16} />}
+          {isCopied ? "Lien copié !" : "Copier le lien d'aperçu"}
         </button>
       </div>
+
+      {/* Success Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" 
+            onClick={handleCloseModal}
+          ></div>
+          
+          <div className="relative w-full max-w-md bg-[#121212]/90 border border-white/10 rounded-3xl p-8 shadow-2xl backdrop-blur-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-[#D4AF37]/20 rounded-full blur-[60px] pointer-events-none"></div>
+            
+            <button 
+              onClick={handleCloseModal}
+              className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex flex-col items-center text-center mt-4 mb-8">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(212,175,55,0.4)] animate-pulse">
+                <Check size={32} className="text-black stroke-[3]" />
+              </div>
+              <h3 className="text-2xl font-serif font-bold tracking-wide">Félicitations !</h3>
+              <p className="text-sm text-white/60 mt-1">Votre page de profil Prism est en ligne et prête à être partagée.</p>
+            </div>
+
+            <div className="space-y-2 mb-8">
+              <label className="block text-[10px] uppercase tracking-wider text-white/40 ml-1 font-bold">Lien de votre page</label>
+              <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-2xl p-3">
+                <span className="text-xs text-white/70 truncate flex-1 select-all font-mono ml-1 font-sans">
+                  {getProfileUrl()}
+                </span>
+                <button 
+                  onClick={handleCopyModal} 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    modalCopied 
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                      : 'bg-[#D4AF37] text-black hover:bg-[#f3d368] shadow-[0_0_15px_rgba(212,175,55,0.2)]'
+                  }`}
+                >
+                  {modalCopied ? <Check size={12} /> : <Copy size={12} />}
+                  {modalCopied ? "Copié !" : "Copier"}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <a 
+                href="/profile" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] text-black rounded-2xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(212,175,55,0.2)] text-center font-sans"
+              >
+                <ExternalLink size={18} /> Voir ma page
+              </a>
+              <button 
+                onClick={handleDownloadHTML}
+                className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+              >
+                <Download size={18} /> Télécharger le code HTML
+              </button>
+
+              {/* QR Code Section */}
+              <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                {!showQrSection ? (
+                  <button 
+                    onClick={handleGenerateQR}
+                    className="w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white/80 hover:text-white rounded-2xl font-medium text-xs transition-colors flex items-center justify-center gap-2"
+                  >
+                    <QrCode size={15} /> Générer un Code QR (Optionnel)
+                  </button>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 bg-white/5 border border-white/5 rounded-2xl p-4 animate-in fade-in duration-300">
+                    <div className="bg-white p-2 rounded-xl shadow-lg">
+                      <img src={qrCodeUrl} alt="Code QR de votre profil" className="w-32 h-32 object-contain" />
+                    </div>
+                    <button 
+                      onClick={handleDownloadQR}
+                      className="px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] text-black hover:scale-[1.02] active:scale-[0.98] transition-transform rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+                    >
+                      <Download size={12} /> Télécharger le Code QR
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button 
+                onClick={handleCloseModal}
+                className="w-full py-3 text-white/40 hover:text-white/70 transition-colors text-xs font-medium"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

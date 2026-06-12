@@ -1,9 +1,39 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { Sparkles, Check, ArrowRight } from "lucide-react";
+import { Sparkles, Check, ArrowRight, Crown } from "lucide-react";
 import AfricanPattern from "@/components/AfricanPattern";
 
 export default function PremiumPage() {
+  const router = useRouter();
+  const [userContext, setUserContext] = useState(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem("prismUser");
+    if (savedUser) {
+      try {
+        setUserContext(JSON.parse(savedUser));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  const handleUpgrade = () => {
+    let updatedUser = { loggedIn: true, isPremium: true };
+    if (userContext) {
+      updatedUser = { ...userContext, isPremium: true };
+    }
+    localStorage.setItem("prismUser", JSON.stringify(updatedUser));
+    setUserContext(updatedUser);
+    
+    alert("Félicitations ! Votre compte a été mis à niveau en Premium 👑. Profitez de thèmes exclusifs et de liens illimités ! Redirection vers le générateur...");
+    router.push("/builder");
+  };
+
   return (
     <div className="min-h-screen bg-[#080502] text-white relative">
       <Header />
@@ -72,8 +102,15 @@ export default function PremiumPage() {
               ))}
             </div>
             
-            <button className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] text-black rounded-2xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(212,175,55,0.2)]">
-              Passer Premium <ArrowRight size={16} />
+            <button 
+              onClick={handleUpgrade}
+              className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#ff6b35] text-black rounded-2xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(212,175,55,0.2)]"
+            >
+              {userContext?.isPremium ? (
+                <>Déjà Premium <Crown size={16} className="text-black" /></>
+              ) : (
+                <>Passer Premium <ArrowRight size={16} /></>
+              )}
             </button>
           </div>
         </div>
